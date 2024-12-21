@@ -13,10 +13,12 @@ from markupsafe import Markup
 
 
 def make_tag(*, static: bool = False):
+    # vite serves on 5173 by default
+    vite_debug_port = current_app.config.get("VITE_DEBUG_SERVE_PORT", "5173")
     if static or not current_app.debug:
         tag = make_static_tag()
     else:
-        tag = make_debug_tag()
+        tag = make_debug_tag(vite_debug_port)
     return Markup(tag)
 
 
@@ -25,8 +27,8 @@ def make_static_tag():
     js_file = Path(glob.glob(f"{vite_folder_path}/dist/assets/*.js")[0]).name
     css_file = Path(glob.glob(f"{vite_folder_path}/dist/assets/*.css")[0]).name
 
-    js_file_url = url_for(f"{vite_folder_path}.static", filename=js_file)
-    css_file_url = url_for(f"{vite_folder_path}.static", filename=css_file)
+    js_file_url = url_for("vite.static", filename=js_file)
+    css_file_url = url_for("vite.static", filename=css_file)
 
     return dedent(
         f"""
@@ -37,11 +39,11 @@ def make_static_tag():
     ).strip()
 
 
-def make_debug_tag():
+def make_debug_tag(vite_debug_port: str):
     return dedent(
-        """
+        f"""
             <!-- FLASK_VITE_HEADER -->
-            <script type="module" src="http://localhost:3000/@vite/client"></script>
-            <script type="module" src="http://localhost:3000/main.js"></script>
+            <script type="module" src="http://localhost:{vite_debug_port}/@vite/client"></script>
+            <script type="module" src="http://localhost:{vite_debug_port}/main.js"></script>
         """
     ).strip()
